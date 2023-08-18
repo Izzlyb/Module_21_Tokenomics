@@ -8,14 +8,16 @@ import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/release-v2.5
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/release-v2.5.0/contracts/crowdsale/validation/TimedCrowdsale.sol";
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/release-v2.5.0/contracts/crowdsale/distribution/RefundablePostDeliveryCrowdsale.sol";
 
-// KaseiCoin Address: 0x7EF2e0048f5bAeDe046f6BF797943daF4ED8CB47
-// Have the KaseiCoinCrowdsale contract inherit the following OpenZeppelin:
+// KaseiCoin Address: 0x78CC7f70c8f41322095b3DeD61E6b43081a01978
+//                          0x25d20BbE3F4935BC783C66D17BCDEe933C70b511
+//                          
+// Have the KaseiCoinCrowdsale contract inherit the following OpenZeppelin: 0xCb81B8A94ae0a30D494bEffee3cc7902d3ffBb3e
 // * Crowdsale
 // * MintedCrowdsale
 // Coin name: KaseiCoin
 // Coin Symbol: KAI
 
-contract KaseiCoinCrowdsale is Crowdsale, MintedCrowdsale { // UPDATE THE CONTRACT SIGNATURE TO ADD INHERITANCE
+contract KaseiCoinCrowdsale is Crowdsale, MintedCrowdsale, CappedCrowdsale, TimedCrowdsale, RefundablePostDeliveryCrowdsale { // UPDATE THE CONTRACT SIGNATURE TO ADD INHERITANCE
     bool public isFundSuccess = false;
     bool public isFundEnable = true;
     bool public fundsWithdraw = false;
@@ -32,11 +34,14 @@ contract KaseiCoinCrowdsale is Crowdsale, MintedCrowdsale { // UPDATE THE CONTRA
     constructor(
         uint _rate,
         address payable _wallet,
-        KaseiCoin _coin
-        // uint goal,
-        // uint open,
-        // uint closed
-    ) public Crowdsale(_rate, _wallet, _coin) {
+        KaseiCoin _coin,
+        uint goal,
+        uint open,
+        uint closed
+    ) public Crowdsale(_rate, _wallet, _coin) 
+                CappedCrowdsale(goal) 
+                TimedCrowdsale(open, closed) 
+                RefundableCrowdsale(goal) { 
         // constructor can stay empty
     }
 
@@ -78,14 +83,13 @@ contract KaseiCoinCrowdsaleDeployer {
         KaseiCoin coin = new KaseiCoin(_name, _symbol, 0);
         kasei_token_address = address(coin);
 
-        KaseiCoinCrowdsale kaseicoin_crowdsale = new KaseiCoinCrowdsale(1, _wallet, coin);
+        KaseiCoinCrowdsale kaseicoin_crowdsale = new KaseiCoinCrowdsale(1, _wallet, coin, 10, now, now + 5 minutes );
         kasei_crowdsale_address = address(kaseicoin_crowdsale);
 
         coin.addMinter(kasei_crowdsale_address);
         coin.renounceMinter();
     }
 }
-
 
 /*
 contract KaseiCoinCrowdsaleDeployer {
